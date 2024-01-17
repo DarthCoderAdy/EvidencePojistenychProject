@@ -7,10 +7,9 @@ public class HlavniNabidkaUI {
     private final Scanner sc;
 
     /**
-     * Konstruktor třídy HlavniNabidkaUI slouží k inicializaci instance hlavního uživatelského rozhraní pro nabídku.
-     * Přijímá dvě důležité reference: Scanner pro načítání vstupu od uživatele a SpravcePojistenych pro správu evidence pojištěných.
-     * @param sc Instance třídy Scanner pro načítání uživatelského vstupu.
-     * @param spravce Instance třídy SpravcePojistenych pro manipulaci s evidencí pojištěných.
+     * Konstruktor třídy HlavniNabidkaUI pro vytvoření instance nabídky evidence pojištěných.
+     * @param sc Scanner pro načítání vstupu od uživatele.
+     * @param spravce Správce evidence pojištěných.
      */
     public HlavniNabidkaUI(Scanner sc, SpravcePojistenych spravce) {
         this.sc = sc;
@@ -64,7 +63,8 @@ public class HlavniNabidkaUI {
             if (!volba.equals("5")) {
                 System.out.println("Přejete si pokračovat? [ano/ne]");
                 pokracovat = sc.nextLine().trim().toLowerCase();
-            } if (pokracovat.equals("ne")) {
+            }
+            if (pokracovat.equals("ne")) {
                 System.out.println(spravce.konecProgramu);
             } else if (!pokracovat.equals("ano")) {
                 System.out.println("Neplatná volba, program bude ukončen.");

@@ -1,22 +1,26 @@
 package EvidencePojisteni;
 
+import java.time.LocalDate;
+
 public class Pojisteny {
+    private final int id;
     private final String jmeno;
     private final String prijmeni;
-    private final int vek;
+    private final LocalDate datumNarozeni;
     private final String telefonniCislo;
 
     /**
      * Konstruktor třídy Pojisteny pro vytvoření instance pojištěné osoby.
      * @param jmeno Jméno pojištěné osoby.
      * @param prijmeni Příjmení pojištěné osoby.
-     * @param vek Věk pojištěné osoby.
+     * @param datumNarozeni Datum narození pojištěné osoby.
      * @param telefonniCislo Telefonní číslo pojištěné osoby.
      */
-    public Pojisteny(String jmeno, String prijmeni, int vek, String telefonniCislo) {
+    public Pojisteny(int id, String jmeno, String prijmeni, LocalDate datumNarozeni, String telefonniCislo) {
+        this.id = id;
         this.jmeno = jmeno;
         this.prijmeni = prijmeni;
-        this.vek = vek;
+        this.datumNarozeni = datumNarozeni;
         this.telefonniCislo = telefonniCislo;
     }
 
@@ -37,13 +41,40 @@ public class Pojisteny {
     }
 
     /**
-     * Metoda pro vytvoření textového reprezentace objektu třídy Pojisteny.
-     * Tato metoda je přepsána z rodičovské třídy Object a slouží k získání formátovaného řetězce obsahujícího informace
-     * o pojištěné osobě, včetně jména, příjmení, věku a telefonního čísla.
-     * @return Textový řetězec s informacemi o pojištěné osobě.
+     * Metoda pro získání Id pojištěné osoby.
+     * @return Id pojištěné osoby.
+     */
+    public int getId() {
+        return id;
+    }
+
+    /**
+     * Metoda pro získání data narození pojištěné osoby.
+     * @return Datum narození pojištěné osoby.
+     */
+    public LocalDate getDatumNarozeni() {
+        return datumNarozeni;
+    }
+
+    /**
+     * Metoda pro získání telefonního čísla pojištěné osoby.
+     * @return Telefonní číslo pojištěné osoby.
+     */
+    public String getTelefonniCislo() {
+        return telefonniCislo;
+    }
+
+    /**
+     * Metoda pro získání textové reprezentace instance pojištěné osoby.
+     * @return Textová reprezentace instance pojištěné osoby.
      */
     @Override
     public String toString() {
-        return String.format("Jméno:\t%s \tPříjmení:\t%s \tVěk:\t%s \tTel. číslo:\t%s", jmeno, prijmeni, vek, telefonniCislo);
+        return "Pojištěný{Id= " + id +
+                " Jméno= " + jmeno +
+                ", Příjmení= " + prijmeni +
+                ", Datum narození= " + datumNarozeni.format(VstupUzivatele.FORMAT_DATA_BEZ_CASU) +
+                ", Telefonní číslo= " + telefonniCislo +
+                " }";
     }
 }

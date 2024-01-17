@@ -1,80 +1,105 @@
 package EvidencePojisteni;
 
+import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Databaze {
-    private final ArrayList<Pojisteny> klienti;
-
+    private static final Logger LOGGER = Logger.getLogger(Databaze.class.getName());
     /**
-     * Konstruktor třídy Databaze sloužící k inicializaci instance databáze a přednaplnění daty.
-     * Vytváří nový seznam klientů typu ArrayList a inicializuje databázi pojištěných osob několika předdefinovanými záznamy.
-     * Tyto záznamy obsahují jméno, příjmení, věk a telefonní číslo.
-     * Přednastavené záznamy mají demonstrační charakter a slouží k zajištění testovacích dat při spuštění programu.
+     * Metoda pro přidání nového pojištěného do databáze.
+     * Metoda přijímá parametry jméno, příjmení, datum narození a telefonní číslo.
+     * @param jmeno Jméno pojištěného.
+     * @param prijmeni Příjmení pojištěného.
+     * @param datumNarozeni Datum narození pojištěného.
+     * @param telefonniCislo Telefonní číslo pojištěného.
      */
-    public Databaze() {
-        klienti = new ArrayList<>();
-        pridejPojistence("Luke", "Skywalker", 28, "+420601222333");
-        pridejPojistence("Anakin", "Skywalker", 48, "+420602333444");
-        pridejPojistence("Han", "Solo", 36, "+420603444555");
-        pridejPojistence("Leia", "Organa", 28, "+420604555666");
-    }
-
-    /**
-     * Metoda pro přidání nového záznamu o pojištěné osobě do databáze.
-     * Vytváří novou instanci třídy Pojisteny s poskytnutými údaji (jméno, příjmení, věk, telefonní číslo)
-     * a přidává ji do seznamu klientů v databázi.
-     * @param jmeno Jméno pojištěné osoby.
-     * @param prijmeni Příjmení pojištěné osoby.
-     * @param vek Věk pojištěné osoby.
-     * @param telefonniCislo Telefonní číslo pojištěné osoby.
-     */
-    public void pridejPojistence(String jmeno, String prijmeni, int vek, String telefonniCislo) {
-            klienti.add(new Pojisteny(jmeno, prijmeni, vek, telefonniCislo));
-    }
-
-    /**
-     * Metoda pro vyhledání pojištěných osob v databázi na základě zadaného jména a příjmení.
-     * Prochází seznam klientů v databázi a porovnává záznamy s poskytnutým jménem a příjmením.
-     * Pokud nalezne shodný záznam, přidá ho do seznamu nalezených pojištěných osob.
-     * @param jmeno Jméno pojištěné osoby k vyhledání.
-     * @param prijmeni Příjmení pojištěné osoby k vyhledání.
-     * @return Nový seznam nalezených pojištěných osob odpovídajících zadaným kritériím.
-     */
-    public List<Pojisteny> najdiPojistence(String jmeno, String prijmeni) {
-        List<Pojisteny> nalezeni = new ArrayList<>();
-        for (Pojisteny klient : klienti) {
-            if ((jmeno.equalsIgnoreCase(klient.getJmeno())) && (prijmeni.equalsIgnoreCase(klient.getPrijmeni()))) {
-                nalezeni.add(klient);
-            }
+    public void pridejPojistence(String jmeno, String prijmeni, LocalDate datumNarozeni, String telefonniCislo) {
+        try (Connection spojeni = DriverManager.getConnection("jdbc:mysql://localhost/pojistky?user=root&password=");
+             PreparedStatement dotaz = spojeni.prepareStatement("INSERT INTO pojistenci (jmeno, prijmeni, datum_narozeni, tel_cislo) VALUES (?, ?, ?, ?)")) {
+            dotaz.setString(1, jmeno);
+            dotaz.setString(2, prijmeni);
+            dotaz.setDate(3, Date.valueOf(datumNarozeni));
+            dotaz.setString(4, telefonniCislo);
+            dotaz.executeUpdate();
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Chyba při komunikaci s databází", ex.getMessage());
         }
-        return nalezeni;
+    }
+
+    /**
+     * Metoda pro vymazání pojištěného z databáze.
+     * Metoda přijímá parametry jméno a příjmení.
+     *
+     * @param jmeno Jméno pojištěného.
+     * @param prijmeni Příjmení pojištěného.
+     */
+    public void vymazPojistence(String jmeno, String prijmeni) {
+        try (Connection spojeni = DriverManager.getConnection("jdbc:mysql://localhost/pojistky?user=root&password=");
+             PreparedStatement dotaz = spojeni.prepareStatement("DELETE FROM pojistenci WHERE jmeno=? AND prijmeni=?")) {
+            dotaz.setString(1, jmeno);
+            dotaz.setString(2, prijmeni);
+            dotaz.executeUpdate();
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Chyba při komunikaci s databází", ex.getMessage());
+        }
+    }
+
+    /**
+     * Metoda pro vyhledání pojištěného v databázi.
+     * Metoda přijímá parametry jméno a příjmení.
+     * Metoda vrací seznam pojištěných osob.
+     * Pokud nebyl nalezen žádný záznam, vypíše se chybová zpráva.
+     *
+     * @param jmeno Jméno pojištěného.
+     * @param prijmeni Příjmení pojištěného.
+     * @return Seznam pojištěných osob.
+     */
+    public List<Pojisteny> vyhledejPojistence(String jmeno, String prijmeni) {
+        List<Pojisteny> vysledky = new ArrayList<>();
+        try (Connection spojeni = DriverManager.getConnection("jdbc:mysql://localhost/pojistky?user=root&password=");
+             PreparedStatement dotaz = spojeni.prepareStatement("SELECT * FROM pojistenci WHERE jmeno= ? AND prijmeni= ?")) {
+            dotaz.setString(1, jmeno);
+            dotaz.setString(2, prijmeni);
+            ResultSet vysledek = dotaz.executeQuery();
+            while (vysledek.next()) {
+                int id = vysledek.getInt(1);
+                jmeno = vysledek.getString("jmeno");
+                prijmeni = vysledek.getString("prijmeni");
+                LocalDate datumNarozeni = vysledek.getDate("datum_narozeni").toLocalDate();
+                String telCislo = vysledek.getString("tel_cislo");
+                vysledky.add(new Pojisteny(id, jmeno, prijmeni, datumNarozeni, telCislo));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Chyba při komunikaci s databází", ex.getMessage());
+        }
+        return vysledky;
     }
 
     /**
      * Metoda pro zobrazení všech pojištěných osob v databázi.
-     * Vrací neupravitelný seznam všech pojištěných osob v databázi.
-     * Tato metoda umožňuje získání přehledu všech záznamů bez možnosti jejich modifikace.
-     * @return Neupravitelný seznam všech pojištěných osob v databázi.
+     *
+     * @return Seznam všech pojištěných osob v databázi.
      */
     public List<Pojisteny> zobrazPojistence() {
-            return Collections.unmodifiableList(klienti);
-    }
-
-    /**
-     * Metoda pro vymazání pojištěných osob z databáze na základě zadaného jména a příjmení.
-     * Nejprve vyhledá záznamy odpovídající zadaným kritériím a uloží je do seznamu záznamů.
-     * Poté postupně odstraní nalezené záznamy z databáze. Vrátí seznam záznamů, které byly úspěšně odstraněny.
-     * @param jmeno Jméno pojištěné osoby k vymazání.
-     * @param prijmeni Příjmení pojištěné osoby k vymazání.
-     * @return Seznam záznamů, které byly úspěšně odstraněny z databáze.
-     */
-    public List<Pojisteny> vymazPojistence(String jmeno, String prijmeni) {
-        List<Pojisteny> zaznamy = najdiPojistence(jmeno, prijmeni);
-        for (Pojisteny zaznam : zaznamy) {
-            klienti.remove(zaznam);
+        List<Pojisteny> seznam = new ArrayList<>();
+        try (Connection spojeni = DriverManager.getConnection("jdbc:mysql://localhost/pojistky?user=root&password=");
+             PreparedStatement dotaz = spojeni.prepareStatement("SELECT * FROM pojistenci");
+             ResultSet vysledky = dotaz.executeQuery()) {
+            while (vysledky.next()) {
+                int id = vysledky.getInt(1);
+                String jmeno = vysledky.getString("jmeno");
+                String prijmeni = vysledky.getString("prijmeni");
+                LocalDate datumNarozeni = vysledky.getDate("datum_narozeni").toLocalDate();
+                String telCislo = vysledky.getString("tel_cislo");
+                seznam.add(new Pojisteny(id, jmeno, prijmeni, datumNarozeni, telCislo));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Chyba při komunikaci s databází", ex.getMessage());
         }
-        return zaznamy;
+        return seznam;
     }
 }
